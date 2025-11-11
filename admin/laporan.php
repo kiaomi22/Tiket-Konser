@@ -21,7 +21,7 @@ try {
     
     // Total Pendapatan
     $stmt_rev = $pdo->query("SELECT SUM(total_harga) FROM tbl_pemesanan WHERE status_pembayaran = 'Lunas'");
-    $total_pendapatan = $stmt_rev->fetchColumn() ?: 0; // pakai '?: 0' jika hasilnya null
+    $total_pendapatan = $stmt_rev->fetchColumn() ?: 0;
 
     // Total Tiket Terjual
     $stmt_tix = $pdo->query("
@@ -48,7 +48,7 @@ try {
         JOIN
             tbl_kategori_tiket kt ON k.id_konser = kt.id_konser
         JOIN
-            tbl_detail_pemesanan d ON kt.id_kategori_tiket = d.id_kategori_tiket
+            tbl_detail_pemesanan d ON kt.id_kategori = d.id_kategori_tiket
         JOIN
             tbl_pemesanan p ON d.id_pemesanan = p.id_pemesanan
         WHERE
@@ -67,10 +67,9 @@ try {
 }
 ?>
 
+<!-- CSS untuk Statistik dan Laporan -->
 <style>
     .alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-    
-    /* Statistik Ringkasan (copy dari dashboard) */
     .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
     .stat-card {
         background: #f4f4f4;
@@ -83,7 +82,6 @@ try {
     .stat-card h3 { font-size: 2.5em; margin: 0 0 10px 0; color: #333; }
     .stat-card p { font-size: 1.1em; color: #555; margin: 0; }
     
-    /* Tabel Laporan */
     table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     table th, table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
     table th { background-color: #f2f2f2; }
@@ -97,8 +95,9 @@ try {
 
 <?php echo $pesan_error; ?>
 
+<!-- --- BAGIAN RINGKASAN --- -->
 <h2>Ringkasan Total</h2>
-<div class="stat-grid">
+<div class="stat-grid"> 
     <div class="stat-card">
         <h3>Rp <?php echo number_format($total_pendapatan, 0, ',', '.'); ?></h3>
         <p>Total Pendapatan</p>
@@ -114,6 +113,7 @@ try {
 </div>
 
 
+<!-- --- BAGIAN TABEL RINCIAN --- -->
 <hr style="margin: 30px 0;">
 <h2>Rincian Penjualan per Konser</h2>
 <table>
@@ -133,7 +133,7 @@ try {
             <?php foreach ($laporan_data as $laporan): ?>
                 <tr>
                     <td><strong><?php echo htmlspecialchars($laporan['nama_konser']); ?></strong></td>
-                    <td><?php echo number_format($laporan['total_tiket_terjual']); ?> tiket</td>
+                    <td><?php echo number_format($laporan['total_tiket_terjual']); ?> tiket</td> 
                     <td>Rp <?php echo number_format($laporan['total_pendapatan_konser'], 0, ',', '.'); ?></td>
                 </tr>
             <?php endforeach; ?>

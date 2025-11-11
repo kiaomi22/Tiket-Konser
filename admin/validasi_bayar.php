@@ -117,6 +117,7 @@ try {
 }
 ?>
 
+<!-- CSS untuk Tabel dan Aksi -->
 <style>
     .alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; }
     .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
@@ -146,6 +147,7 @@ try {
 <h1>Validasi Pembayaran</h1>
 <p>Daftar pesanan yang telah mengupload bukti pembayaran dan menunggu validasi.</p>
 
+<!-- Tampilkan pesan sukses/error -->
 <?php echo $pesan; ?>
 
 <table>
@@ -175,6 +177,7 @@ try {
                     </td>
                     <td>Rp <?php echo number_format($validasi['total_harga'], 0, ',', '.'); ?></td>
                     <td>
+                        <!-- Link ke file bukti bayar di folder uploads/ -->
                         <a href="../uploads/<?php echo htmlspecialchars($validasi['bukti_pembayaran']); ?>" 
                            target="_blank" class="btn-aksi btn-bukti">
                            Lihat Bukti
