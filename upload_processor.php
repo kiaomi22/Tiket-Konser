@@ -41,10 +41,10 @@ $upload_dir = 'uploads/';
 
 // 7. Validasi Tipe File (Izinkan JPG, JPEG, PNG)
 $file_info = getimagesize($file['tmp_name']);
-$allowed_types = [IMAGETYPE_JPEG, IMAGETYPE_PNG];
+$allowed_types = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_GIF]; // Menambahkan GIF sebagai opsi
 
 if ($file_info === false || !in_array($file_info[2], $allowed_types)) {
-    $_SESSION['error_message'] = 'File tidak valid. Harap upload file gambar (JPG, JPEG, atau PNG).';
+    $_SESSION['error_message'] = 'File tidak valid. Harap upload file gambar (JPG, JPEG, PNG, GIF).';
     header("Location: tiket_saya.php");
     exit;
 }
@@ -63,6 +63,12 @@ $timestamp = time();
 $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
 // Bersihkan nama file dari karakter aneh
 $safe_original_name = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", basename($file['name']));
+
+// Pastikan nama file tidak kosong setelah dibersihkan
+if(empty($safe_original_name)) {
+    $safe_original_name = "file_upload." . $file_extension;
+}
+
 $new_filename = $id_pemesanan . '_' . $timestamp . '_' . $safe_original_name;
 $target_path = $upload_dir . $new_filename;
 

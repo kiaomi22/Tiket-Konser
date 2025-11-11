@@ -2,6 +2,10 @@
 // Selalu mulai session di baris paling atas
 session_start();
 
+// TENTUKAN NAMA FOLDER PROYEK ANDA
+// (Berdasarkan screenshot Anda, ini adalah '/tiket_konser/')
+$project_folder = '/tiket_konser/';
+
 // Cek status login
 $is_logged_in = isset($_SESSION['is_logged_in']) && $_SESSION['is_logged_in'] === true;
 $user_role = $is_logged_in ? $_SESSION['user_role'] : '';
@@ -13,7 +17,6 @@ $user_nama = $is_logged_in ? $_SESSION['user_nama'] : '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($page_title) ? $page_title : 'Sistem Tiket Konser'; ?></title>
-    
     <style>
         body { font-family: sans-serif; margin: 0; background-color: #f9f9f9; }
         .navbar { background-color: #333; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -29,24 +32,30 @@ $user_nama = $is_logged_in ? $_SESSION['user_nama'] : '';
 <body>
 
 <nav class="navbar">
-    <a href="index.php" class="logo">TIKETKONSER</a>
+    <!-- LINK DIPERBAIKI (diawali $project_folder) -->
+    <a href="<?php echo $project_folder; ?>index.php" class="logo">TIKETKONSER</a>
     
     <ul class="nav-links">
         <?php if ($is_logged_in): ?>
             <span class="welcome-msg">Halo, <?php echo htmlspecialchars($user_nama); ?>!</span>
             
             <?php if ($user_role == 'admin'): ?>
-                <li><a href="admin/index.php">Dashboard Admin</a></li>
+                <!-- LINK DIPERBAIKI -->
+                <li><a href="<?php echo $project_folder; ?>admin/index.php">Dashboard Admin</a></li>
             <?php endif; ?>
             
-            <li><a href="tiket_saya.php">Tiket Saya</a></li>
-            <li><a href="logout.php" style="background-color: #d9534f;">Logout</a></li>
+            <!-- LINK DIPERBAIKI -->
+            <li><a href="<?php echo $project_folder; ?>tiket_saya.php">Tiket Saya</a></li>
+            <!-- LINK DIPERBAIKI -->
+            <li><a href="<?php echo $project_folder; ?>logout.php" style="background-color: #d9534f;">Logout</a></li>
             
         <?php else: ?>
-            <li><a href="login.php">Login</a></li>
-            <li><a href="register.php">Register</a></li>
+            <!-- LINK DIPERBAIKI -->
+            <li><a href="<?php echo $project_folder; ?>login.php">Login</a></li>
+            <li><a href="<?php echo $project_folder; ?>register.php">Register</a></li>
         <?php endif; ?>
     </ul>
 </nav>
 
+<!-- Konten utama akan dimulai di sini -->
 <div class="container">

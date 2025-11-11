@@ -1,11 +1,12 @@
 <?php
-session_start(); // Ambil session yang ada
+// Selalu mulai session di baris paling atas
+session_start();
 
 // Hancurkan semua data session
 session_unset();
 session_destroy();
 
-// Kembalikan pengguna ke halaman utama
-header("Location: index.php");
+// Kembalikan pengguna ke halaman login (atau index)
+header("Location: login.php");
 exit;
 ?>
