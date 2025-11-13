@@ -13,11 +13,7 @@ require_once '../config/database.php';
 // Tentukan folder upload (keluar satu level dari 'admin')
 $upload_dir = '../uploads/';
 if (!is_dir($upload_dir)) {
-    // Buat folder jika belum ada
-    if (!@mkdir($upload_dir, 0755, true)) {
-        // Cek jika gagal membuat folder (karena masalah izin)
-        $pesan = '<div class="alert error">Gagal membuat folder uploads. Pastikan folder htdocs/tiket_konser writable.</div>';
-    }
+    mkdir($upload_dir, 0755, true);
 }
 
 // Inisialisasi variabel
@@ -58,11 +54,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // Validasi Tipe File Sederhana
         $allowed_types = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_GIF];
-        $file_info = @getimagesize($file['tmp_name']); // @ untuk menekan error jika bukan gambar
+        $file_info = getimagesize($file['tmp_name']);
         
         if ($file_info && in_array($file_info[2], $allowed_types)) {
             // Buat nama file unik
-            $nama_file_unik = 'konser_' . time() . '_' . preg_replace("/[^a-zA-Z0-9-_\.]/", "_", basename($file['name']));
+            $nama_file_unik = 'konser_' . time() . '_' . basename($file['name']);
             $target_path = $upload_dir . $nama_file_unik;
 
             // Pindahkan file
@@ -74,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     @unlink($upload_dir . $gambar_lama);
                 }
             } else {
-                $pesan = '<div class="alert error">Gagal memindahkan file gambar. Pastikan folder uploads/ writable.</div>';
+                $pesan = '<div class="alert error">Gagal memindahkan file gambar.</div>';
             }
         } else {
             $pesan = '<div class="alert error">Tipe file gambar tidak valid (izinkan JPG, PNG, GIF).</div>';
@@ -82,29 +78,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     // --- AKHIR LOGIKA UPLOAD ---
 
-    // Lanjutkan proses DB hanya jika tidak ada error upload
-    if (empty($pesan)) {
-        try {
-            if ($aksi_post == 'tambah') {
-                // --- LOGIKA TAMBAH (DENGAN GAMBAR) ---
-                $sql = "INSERT INTO tbl_konser (nama_konser, lokasi, tanggal_waktu, deskripsi, gambar) 
-                        VALUES (?, ?, ?, ?, ?)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([$nama_konser, $lokasi, $tanggal_waktu, $deskripsi, $nama_file_gambar]);
-                $pesan = '<div class="alert success">Konser baru berhasil ditambahkan.</div>';
+    try {
+        if ($aksi_post == 'tambah') {
+            // --- LOGIKA TAMBAH (DENGAN GAMBAR) ---
+            $sql = "INSERT INTO tbl_konser (nama_konser, lokasi, tanggal_waktu, deskripsi, gambar) 
+                    VALUES (?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$nama_konser, $lokasi, $tanggal_waktu, $deskripsi, $nama_file_gambar]);
+            $pesan = '<div class="alert success">Konser baru berhasil ditambahkan.</div>';
 
-            } elseif ($aksi_post == 'edit') {
-                // --- LOGIKA UPDATE (DENGAN GAMBAR) ---
-                $sql = "UPDATE tbl_konser 
-                        SET nama_konser = ?, lokasi = ?, tanggal_waktu = ?, deskripsi = ?, gambar = ? 
-                        WHERE id_konser = ?";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([$nama_konser, $lokasi, $tanggal_waktu, $deskripsi, $nama_file_gambar, $id_konser_post]);
-                $pesan = '<div class="alert success">Data konser berhasil diperbarui.</div>';
-            }
-        } catch (PDOException $e) {
-            $pesan = '<div class="alert error">Gagal memproses data: ' . $e->getMessage() . '</div>';
+        } elseif ($aksi_post == 'edit') {
+            // --- LOGIKA UPDATE (DENGAN GAMBAR) ---
+            $sql = "UPDATE tbl_konser 
+                    SET nama_konser = ?, lokasi = ?, tanggal_waktu = ?, deskripsi = ?, gambar = ? 
+                    WHERE id_konser = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$nama_konser, $lokasi, $tanggal_waktu, $deskripsi, $nama_file_gambar, $id_konser_post]);
+            $pesan = '<div class="alert success">Data konser berhasil diperbarui.</div>';
         }
+    } catch (PDOException $e) {
+        $pesan = '<div class="alert error">Gagal memproses data: ' . $e->getMessage() . '</div>';
     }
 }
 
@@ -127,7 +120,6 @@ if ($aksi == 'hapus' && $id_konser > 0) {
         }
 
         $pesan = '<div class="alert success">Konser dan gambar terkait berhasil dihapus.</div>';
-        $_SESSION['admin_message'] = $pesan; // Simpan di session untuk redirect
         header("Location: kelola_konser.php");
         exit;
     } catch (PDOException $e) {
@@ -146,12 +138,6 @@ if ($aksi == 'edit' && $id_konser > 0) {
         $label_form = 'Edit Data Konser';
         $aksi_form = 'edit';
     }
-}
-
-// Cek pesan dari session (jika ada redirect)
-if (isset($_SESSION['admin_message'])) {
-    $pesan = $_SESSION['admin_message'];
-    unset($_SESSION['admin_message']);
 }
 
 // 5. AMBIL SEMUA DATA KONSER (UNTUK TABEL)
@@ -181,7 +167,7 @@ try {
         border-radius: 4px;
         box-sizing: border-box; 
     }
-    .current-image { max-width: 200px; height: auto; display: block; margin-top: 10px; border: 1px solid #ddd; padding: 5px; border-radius: 4px;}
+    .current-image { max-width: 200px; height: auto; display: block; margin-top: 10px; border: 1px solid #ddd; padding: 5px; }
     .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
     .btn-primary { background-color: #007bff; color: white; }
     .btn-secondary { background-color: #6c757d; color: white; }
@@ -240,15 +226,14 @@ try {
             <label for="gambar">Gambar Konser</label>
             <input type="file" id="gambar" name="gambar" accept="image/jpeg, image/png, image/gif">
             
-            <?php if ($aksi_form == 'edit' && !empty($data_form['gambar'])): ?>
+            <?php // Tampilkan gambar saat ini jika mode edit dan gambar ada
+            if ($aksi_form == 'edit' && !empty($data_form['gambar'])): ?>
                 <p style="font-size: 0.9em; margin-top: 10px;">Gambar saat ini:</p>
                 <img src="<?php echo $upload_dir . htmlspecialchars($data_form['gambar']); ?>" alt="Gambar saat ini" class="current-image">
-                <small>Upload file baru untuk mengganti gambar ini.</small>
-            <?php endif; // <-- INI YANG HILANG DAN SUDAH DIPERBAIKI ?>
-            
-        </div>
-        <!-- --- BATAS INPUT GAMBAR --- -->
+                <small>Upload file baru untuk mengganti gambar ini. Kosongkan jika tidak ingin ganti.</small>
+            <?php endif; // Penutup 'if' yang hilang sebelumnya ?>
 
+        </div>
         
         <button type="submit" class="btn btn-primary">
             <?php echo ($aksi_form == 'edit') ? 'Update Data' : 'Tambah Konser'; ?>
@@ -268,7 +253,7 @@ try {
 <table>
     <thead>
         <tr>
-            <th>Gambar</th> <!-- TAMBAHAN BARU -->
+            <th>Gambar</th> <!-- KOLOM BARU -->
             <th>Nama Konser</th>
             <th>Lokasi</th>
             <th>Waktu</th>
@@ -284,11 +269,11 @@ try {
             <?php foreach ($daftar_konser as $konser): ?>
                 <tr>
                     <td>
-                        <!-- TAMBAHAN BARU: Tampilkan Thumbnail -->
-                        <?php if (!empty($konser['gambar']) && file_exists($upload_dir . $konser['gambar'])): ?>
-                            <img src="<?php echo $upload_dir . htmlspecialchars($konser['gambar']); ?>" alt="Thumbnail" class="thumb-img">
+                        <!-- TAMPILKAN GAMBAR THUMBNAIL -->
+                        <?php if (!empty($konser['gambar'])): ?>
+                            <img src="<?php echo $upload_dir . htmlspecialchars($konser['gambar']); ?>" alt="thumbnail" class="thumb-img">
                         <?php else: ?>
-                            <small>No Img</small>
+                            <small>No Image</small>
                         <?php endif; ?>
                     </td>
                     <td><?php echo htmlspecialchars($konser['nama_konser']); ?></td>
@@ -299,7 +284,7 @@ try {
                         <a href="kelola_konser.php?aksi=edit&id=<?php echo $konser['id_konser']; ?>" class="btn btn-edit">Edit</a>
                         <a href="kelola_konser.php?aksi=hapus&id=<?php echo $konser['id_konser']; ?>" 
                            class="btn btn-hapus" 
-                           onclick="return confirm('Anda yakin ingin menghapus konser ini? Semua data tiket dan gambar terkait akan ikut terhapus permanen.');">
+                           onclick="return confirm('Anda yakin ingin menghapus konser ini? Semua data tiket terkait dan gambar akan ikut terhapus permanen.');">
                            Hapus
                         </a>
                     </td>
