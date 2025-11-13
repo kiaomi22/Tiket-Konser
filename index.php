@@ -1,18 +1,12 @@
 <?php
-// Set judul halaman
 $page_title = "Selamat Datang di Sistem Tiket Konser";
 
-// 1. Panggil Header
-require_once 'templates/header.php'; // $project_folder sudah ada di sini
-
-// 2. Panggil Koneksi Database
+require_once 'templates/header.php'; 
 require_once 'config/database.php';
 
-// Inisialisasi variabel untuk data konser
 $konser_list = [];
 $error_db = '';
 
-// 3. Ambil data konser dari database (termasuk kolom 'gambar' baru)
 try {
     $sql = "SELECT * FROM tbl_konser 
             WHERE tanggal_waktu >= NOW() 
@@ -28,7 +22,6 @@ try {
 ?>
 
 <style>
-    /* ... (CSS Anda sebelumnya biarkan saja) ... */
     .page-title { border-bottom: 2px solid #f4f4f4; padding-bottom: 10px; }
     .konser-grid { 
         display: grid; 
@@ -48,11 +41,11 @@ try {
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
-    /* PENTING: CSS ini memastikan gambar Anda pas di dalam kartu */
+    
     .konser-card img { 
         width: 100%; 
-        height: 180px; /* Kita set tinggi yang seragam */
-        object-fit: cover; /* Ini membuat gambar ter-crop rapi */
+        height: 180px; 
+        object-fit: cover; 
         background-color: #eee; 
     }
     
@@ -89,25 +82,14 @@ try {
         
         <?php foreach ($konser_list as $konser): ?>
             <div class="konser-card">
-                
-                <!-- 
-                ---
-                --- INI BAGIAN YANG DIPERBAIKI ---
-                ---
-                -->
                 <?php
-                    // Tentukan gambar
                     $placeholder = 'https://via.placeholder.com/300x180.png?text=' . urlencode($konser['nama_konser']);
-                    $gambar_url = $placeholder; // Default
-                    
-                    // Cek jika ada gambar di DB DAN file-nya ada di server
+                    $gambar_url = $placeholder; 
                     if (!empty($konser['gambar']) && file_exists('uploads/' . $konser['gambar'])) {
-                        // $project_folder diambil dari header.php
                         $gambar_url = $project_folder . 'uploads/' . htmlspecialchars($konser['gambar']);
                     }
                 ?>
                 <img src="<?php echo $gambar_url; ?>" alt="<?php echo htmlspecialchars($konser['nama_konser']); ?>">
-                <!-- --- BATAS PERBAIKAN --- -->
 
                 
                 <div class="konser-card-content">
@@ -132,6 +114,5 @@ try {
 
 
 <?php
-// 5. Panggil Footer
 require_once 'templates/footer.php';
 ?>
