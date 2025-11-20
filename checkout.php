@@ -8,9 +8,7 @@ require_once 'config/database.php';
 // --- TAHAP 1: VALIDASI & KEAMANAN ---
 
 // 2. Cek Keamanan: Apakah user sudah login?
-// Jika belum, tendang ke halaman login
 if (!isset($_SESSION['is_logged_in']) || $_SESSION['is_logged_in'] !== true) {
-    // Simpan pesan error untuk ditampilkan di halaman login
     $_SESSION['error_message'] = "Anda harus login untuk melakukan checkout.";
     header("Location: login.php");
     exit;
@@ -19,7 +17,6 @@ $id_user = $_SESSION['user_id']; // Ambil ID user dari session
 
 // 3. Cek Keamanan: Apakah data dikirim via POST?
 if ($_SERVER["REQUEST_METHOD"] != "POST" || !isset($_POST['jumlah']) || !isset($_POST['id_konser'])) {
-    // Jika diakses manual atau data tidak lengkap, tendang ke index
     header("Location: index.php");
     exit;
 }
@@ -37,7 +34,6 @@ $nama_tiket_stok_habis = '';
 
 // 5. Filter item yang dibeli (jumlah > 0) dan validasi harganya dari DB
 try {
-    // Ambil semua ID kategori yang ingin dibeli
     $daftar_id_kategori = [];
     foreach ($jumlah_beli_array as $id_kategori => $jumlah) {
         if ((int)$jumlah > 0) {
@@ -46,15 +42,15 @@ try {
     }
 
     if (empty($daftar_id_kategori)) {
-        // User klik "Pesan" tapi tidak memilih satupun tiket
         $_SESSION['error_message'] = 'Anda belum memilih jumlah tiket yang ingin dibeli.';
         header("Location: detail_konser.php?id=" . $id_konser);
         exit;
     }
 
-    // 6. Ambil data HARGA ASLI dan STOK ASLI dari Database (PENTING!)
-    // Ini mencegah user mengubah harga tiket dari sisi HTML
+    // 6. Ambil data HARGA ASLI dan STOK ASLI dari Database
     $placeholders = rtrim(str_repeat('?,', count($daftar_id_kategori)), ',');
+    
+    // Query ini mengambil id sebagai kolom PERTAMA, ini penting untuk FETCH_UNIQUE
     $sql_check = "SELECT id_kategori, nama_kategori, harga, stok FROM tbl_kategori_tiket 
                   WHERE id_kategori IN ($placeholders) AND id_konser = ?";
     
@@ -63,26 +59,26 @@ try {
     $params[] = $id_konser; // Tambahkan id_konser di akhir
     $stmt_check->execute($params);
     
-    $tiket_data_db = $stmt_check->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_KEY_PAIR);
+    // --- PERBAIKAN DI SINI ---
+    // Gunakan FETCH_UNIQUE agar id_kategori menjadi key array
+    $tiket_data_db = $stmt_check->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
     
     // 7. Loop final untuk validasi stok dan hitung total
     foreach ($jumlah_beli_array as $id_kategori => $jumlah) {
         $jumlah = (int)$jumlah;
         if ($jumlah <= 0) continue; // Lewati jika tidak beli
 
-        // Cek apakah tiket ada di data DB yang kita tarik
         if (!isset($tiket_data_db[$id_kategori])) {
-             // Kemungkinan user menginspeksi elemen dan mengubah ID kategori
              throw new Exception("Terjadi kesalahan validasi data tiket.");
         }
         
-        $tiket = $tiket_data_db[$id_kategori];
+        $tiket = $tiket_data_db[$id_kategori]; // $tiket sekarang berisi ['nama_kategori', 'harga', 'stok']
 
-        // VALIDASI STOK (Race Condition Check)
+        // VALIDASI STOK
         if ($jumlah > $tiket['stok']) {
             $stok_habis = true;
             $nama_tiket_stok_habis = $tiket['nama_kategori'];
-            break; // Hentikan loop, satu tiket saja stoknya kurang
+            break; 
         }
 
         // Jika lolos, masukkan ke keranjang final
@@ -109,26 +105,19 @@ if ($stok_habis) {
 }
 
 // --- TAHAP 3: DATABASE TRANSACTION (INTI) ---
-// Kita harus menjalankan 3 query:
-// 1. INSERT ke tbl_pemesanan
-// 2. INSERT ke tbl_detail_pemesanan (bisa berkali-kali)
-// 3. UPDATE stok di tbl_kategori_tiket (bisa berkali-kali)
-// Ini semua harus berhasil, atau GAGAL SEMUA.
-
 try {
     // Mulai Transaksi
     $pdo->beginTransaction();
 
-    // 1. INSERT ke tbl_pemesanan (Induk Transaksi)
+    // 1. INSERT ke tbl_pemesanan
     $sql_pemesanan = "INSERT INTO tbl_pemesanan (id_user, total_harga, status_pembayaran) 
                       VALUES (?, ?, 'Menunggu')";
     $stmt_pemesanan = $pdo->prepare($sql_pemesanan);
     $stmt_pemesanan->execute([$id_user, $total_harga_keseluruhan]);
     
-    // Ambil ID pemesanan baru yang tadi dibuat
     $id_pemesanan_baru = $pdo->lastInsertId();
 
-    // Siapkan query untuk loop (lebih efisien)
+    // Siapkan query untuk loop
     $sql_detail = "INSERT INTO tbl_detail_pemesanan (id_pemesanan, id_kategori_tiket, jumlah_tiket, harga_saat_pesan) 
                    VALUES (?, ?, ?, ?)";
     $stmt_detail = $pdo->prepare($sql_detail);
@@ -139,7 +128,6 @@ try {
     // 2. & 3. Loop untuk insert detail dan update stok
     foreach ($items_to_buy as $item) {
         
-        // 2. Insert ke tbl_detail_pemesanan
         $stmt_detail->execute([
             $id_pemesanan_baru,
             $item['id_kategori'],
@@ -147,14 +135,12 @@ try {
             $item['harga_saat_pesan']
         ]);
         
-        // 3. Update stok di tbl_kategori_tiket
         $stmt_update_stok->execute([
-            $item['jumlah'], // jumlah yang dibeli
+            $item['jumlah'],
             $item['id_kategori']
         ]);
     }
 
-    // Jika semua query di atas berhasil tanpa error...
     // Kunci Transaksi!
     $pdo->commit();
 
@@ -164,8 +150,7 @@ try {
     exit;
 
 } catch (Exception $e) {
-    // Jika ada SATU SAJA query yang gagal...
-    // Batalkan semua query yang sudah dijalankan!
+    // Batalkan semua query
     $pdo->rollBack();
 
     // --- TAHAP 4: REDIRECT GAGAL ---
