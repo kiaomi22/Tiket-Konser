@@ -2,8 +2,8 @@
 // Selalu mulai session di baris paling atas
 session_start();
 
-// TENTUKAN NAMA FOLDER PROYEK ANDA
-// (Berdasarkan screenshot Anda, ini adalah '/tiket_konser/')
+// Tentukan folder proyek Anda
+// (Berdasarkan screenshot Anda, folder Anda adalah 'tiket_konser')
 $project_folder = '/tiket_konser/';
 
 // Cek status login
@@ -32,25 +32,28 @@ $user_nama = $is_logged_in ? $_SESSION['user_nama'] : '';
 <body>
 
 <nav class="navbar">
-    <!-- LINK DIPERBAIKI (diawali $project_folder) -->
+    <!-- LINK UTAMA -->
     <a href="<?php echo $project_folder; ?>index.php" class="logo">TIKETKONSER</a>
     
     <ul class="nav-links">
         <?php if ($is_logged_in): ?>
             <span class="welcome-msg">Halo, <?php echo htmlspecialchars($user_nama); ?>!</span>
             
+            <!-- --- LOGIKA MENU --- -->
             <?php if ($user_role == 'admin'): ?>
-                <!-- LINK DIPERBAIKI -->
+                <!-- JIKA ADMIN: Tampilkan Dashboard Admin SAJA -->
                 <li><a href="<?php echo $project_folder; ?>admin/index.php">Dashboard Admin</a></li>
-            <?php endif; ?>
             
-            <!-- LINK DIPERBAIKI -->
-            <li><a href="<?php echo $project_folder; ?>tiket_saya.php">Tiket Saya</a></li>
-            <!-- LINK DIPERBAIKI -->
+            <?php else: ?>
+                <!-- JIKA USER BIASA: Tampilkan Tiket Saya SAJA -->
+                <li><a href="<?php echo $project_folder; ?>tiket_saya.php">Tiket Saya</a></li>
+            <?php endif; ?>
+            <!-- --- AKHIR LOGIKA MENU --- -->
+            
             <li><a href="<?php echo $project_folder; ?>logout.php" style="background-color: #d9534f;">Logout</a></li>
             
         <?php else: ?>
-            <!-- LINK DIPERBAIKI -->
+            <!-- Menu Jika BELUM Login -->
             <li><a href="<?php echo $project_folder; ?>login.php">Login</a></li>
             <li><a href="<?php echo $project_folder; ?>register.php">Register</a></li>
         <?php endif; ?>
