@@ -27,6 +27,7 @@ $user_nama = $is_logged_in ? $_SESSION['user_nama'] : '';
         .navbar .nav-links a:hover, .navbar .nav-links a.active { background-color: #555; }
         .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .welcome-msg { margin-right: 15px; }
+        
     </style>
 </head>
 <body>
